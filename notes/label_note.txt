@@ -1,0 +1,29 @@
+标签细则    label details
+噪点    0   noise   灰色
+路面    1   road    黄色
+车头    2   head    紫色
+物料    3   material绿色
+钢筋    4   iron    橙色
+雨棚    5   rain    白色
+采集点  6   target  红色
+前后挡板7   pan     蓝色
+labeled 561/?
+
+{"label": "Noise", "color": "#CFCFCF"},
+{"label": "Road", "color": "#DCDC00", "icon": "Road"},
+{"label": "Head", "color": "#F423E8", "icon": "NaturePeople"},
+{"label": "Material", "color": "#98FB98", "icon": "Parking"},
+{"label": "Iron", "color": "#FF8800", "icon": "Train"},
+{"label": "Rain", "color": "#FAFFF5", "icon": "Walk"},
+{"label": "Target", "color": "#FF0000", "icon": "Motorbike"},
+{"label": "Pan", "color": "#4682B4", "icon": "Car"}
+label_color_map=(
+    (207,   207,    207),
+    (220,   220,    0),
+    (244,   35,     232),
+    (152,   251,    152),
+    (255,   136,    0),
+    (250,   207,    245),
+    (255,   0,      0),
+    (70,    130,    180)
+)
