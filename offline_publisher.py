@@ -25,7 +25,8 @@ if DSChooseFirst:
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc_filtered' # 1100
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc0701static' # 382
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc071803'
-    pointcloud_dir=f'/mnt/d/wsl_tools/pc082303'
+    # pointcloud_dir=f'/mnt/d/wsl_tools/pc082303'
+    pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc082601'
     has_label=False # raw pc has no label
 else:
     # -- here are labeled pointclouds

@@ -6,12 +6,10 @@ from transfer_dataset import *
 import open3d as o3d
 import global_config as CONF
 
-BoundShrink=0.25
+BoundShrink=0.20
 DIST_ROD=0.20
 detect_box=np.array([[-1000, 1492,-1300],
                      [-6900, 2531,  465]],dtype=np.float32)
-detect_box[0]+=BoundShrink*1000
-detect_box[1]-=BoundShrink*1000
 def bbox2lidar(x):
     x = arm2lidar(x/1000)
     x = x.T
@@ -65,11 +63,11 @@ class PointSelector:
                 points=None
             else:
                 bound = np.max(material,axis=0)
-                yM=bound[1]
-                zM=bound[2]
+                yM=bound[1]-BoundShrink
+                zM=bound[2]#-BoundShrink
                 bound = material.min(axis=0)
-                ym=bound[1]
-                zm=bound[2]
+                ym=bound[1]+BoundShrink
+                zm=bound[2]+BoundShrink
                 # if CONF.DEBUG: # not record material. 
                 #     pc_plot=material+np.array([[-0.2,0,0,0]])
                 #     pc_log=np.vstack([pc_log,pc_plot])
@@ -93,13 +91,13 @@ class PointSelector:
                         if len(col)>0:
                             col[:,3]=class_num+i*zsteps+j # over write intensity
                             patches.append(col)
+                if CONF.DEBUG:
+                    pc_plot=np.vstack(patches)+np.array([[-0.4,0,0,0]])
+                    pc_log=np.vstack([pc_log,pc_plot])
+                    self.pub_patch.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.lidar_frame))
                 if len(patches)<=8: # less than half
                     points=None
                 else:
-                    if CONF.DEBUG:
-                        pc_plot=np.vstack(patches)+np.array([[-0.4,0,0,0]])
-                        pc_log=np.vstack([pc_log,pc_plot])
-                        self.pub_patch.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.lidar_frame))
                     # get max point of each patch
                     points=[]
                     for i in range(len(patches)):

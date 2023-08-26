@@ -20,11 +20,7 @@ import global_config as CONF
 # 6 truck position stop # wait
 
 # ====== c params
-POSITION_DETECT=True
-if not POSITION_DETECT:
-    CONF.stop_state=5
-else:
-    CONF.stop_state=6
+POSITION_DETECT=CONF.POSITION_DETECT
 
 PLOT_MAX=3
 tolerance_c = 0.40 # not much over 0.2
