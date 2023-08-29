@@ -22,7 +22,7 @@ class PC_Processer:
         self.pc_sub=None
         self.processer=PC_Recorder(CONF.RECORD_DIR)
     def start(self):
-        self.pc_sub = rospy.Subscriber(CONF.calib_topic, PointCloud2, self.send, queue_size=1, buff_size=2 ** 24)
+        self.pc_sub = rospy.Subscriber(CONF.TOPIC_CALIB, PointCloud2, self.send, queue_size=1, buff_size=2 ** 24)
     def stop(self):
         self.pc_sub.unregister()
     def send(self,pc):

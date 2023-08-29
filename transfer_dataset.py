@@ -146,6 +146,8 @@ def find_nearst(array, value):
     array = np.asarray(array)
     ind = (np.abs(array-value)).argmin()
     return ind
+def time_str():
+    return time.strftime("%Y-%m-%d_%H-%M-%S").split('_') #len=2
 
 class TransferDataset(torch.utils.data.Dataset):
     def __init__(self,

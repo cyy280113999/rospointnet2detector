@@ -34,16 +34,11 @@ class PointSelector:
         self.pub_max=rospy.Publisher('/debug_max_point',PointCloud2,queue_size=1)
         self.pub_log=rospy.Publisher('/debug_log_points',PointCloud2,queue_size=1)
 
-    def get_points(self,xs,n=13):
+    def get_points(self,x,n=13):
         # return: list->[points]. None->error 
-        x=xs[0]
         if CONF.DEBUG:
             pc_log=x
-        avoid_y=[]
-        for x_ in xs:
-            avoid_y.append(x_[(x_[:,3]==4).__or__(x_[:,3]==5),1]) # exclude rod and rain
-        # avoid_y = x[(x[:,3]==4).__or__(x[:,3]==5),1] # exclude rod and rain
-        avoid_y=np.concatenate(avoid_y)
+        avoid_y = x[(x[:,3]==4).__or__(x[:,3]==5),1] # exclude rod and rain
         if len(avoid_y)>0:
             y_intervals=find_clusters(avoid_y)
             y_intervals = interval_expand(y_intervals, radius=DIST_ROD)
@@ -94,8 +89,8 @@ class PointSelector:
                 if CONF.DEBUG:
                     pc_plot=np.vstack(patches)+np.array([[-0.4,0,0,0]])
                     pc_log=np.vstack([pc_log,pc_plot])
-                    self.pub_patch.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.lidar_frame))
-                if len(patches)<=8: # less than half
+                    self.pub_patch.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.FRAME_LIDAR))
+                if len(patches)<8: # less than half
                     points=None
                 else:
                     # get max point of each patch
@@ -125,13 +120,16 @@ class PointSelector:
                     if CONF.DEBUG:
                         pc_plot=points+np.array([[-0.8,0,0,0]])
                         pc_log=np.vstack([pc_log,pc_plot])
-                        self.pub_max.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.lidar_frame))
-                        self.pub_log.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_log),frame_id=CONF.lidar_frame))
+                        self.pub_max.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.FRAME_LIDAR))
+                        self.pub_log.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_log),frame_id=CONF.FRAME_LIDAR))
         if CONF.DEBUG:
             pc = o3d.geometry.PointCloud()
             pc.points = o3d.utility.Vector3dVector(pc_log[:,:3]) # remove intensity
             pc.colors=o3d.utility.Vector3dVector([intens2rgb[int(i)]for i in pc_log[:,3]])# keep intensity
-            o3d.io.write_point_cloud(pj(CONF.pc_log_dir,f'{time.strftime("%Y-%m-%d-%H-%M-%S")}.pcd'),pc)
+            s1,s2=time_str()
+            if not os.path.exists(pj(CONF.DIR_PC_LOG,s1)):
+                os.makedirs(pj(CONF.DIR_PC_LOG,s1))
+            o3d.io.write_point_cloud(pj(CONF.DIR_PC_LOG,s1,f'{s2}.pcd'),pc)
         if points is not None and points.shape[1]==4:
             points[:,:3] # remove intensity
         return points

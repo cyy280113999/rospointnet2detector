@@ -23,53 +23,40 @@ from rospn2 import Segmentator
 from point_selector import PointSelector
 import global_config as CONF
 
-# ============= customized params
 # -- where is the pc?
-ON_LINE=CONF.ON_LINE  # where is pc?
-if ON_LINE:
-    TOPIC_RAW='/rslidar_points' # from online lidar
+if CONF.ON_LINE:
+    TOPIC_FROM='/rslidar_points' # from online lidar
     PRE_CALIB=True # calib ensure standard rotation at height of 2m, easy to train network
 else:
-    TOPIC_RAW='/off_line' # from off line files. off line pc saved after calibration, used for debug
+    TOPIC_FROM='/off_line' # from off line files. off line pc saved after calibration, used for debug
     PRE_CALIB=False # off line donot calib
-BOUNDING=CONF.BOUNDING # bounding limit calibrated dataset in proper boundary 
-Start_MServer=CONF.Start_MServer
-Start_MClient=CONF.Start_MClient
-# run net
-MOVE_DETECT=CONF.MOVE_DETECT
-REQUIRE_NEED=CONF.REQUIRE_NEED
-DETECT=CONF.DETECT
+BOUNDING=True # bounding limit calibrated dataset in proper boundary 
 
-# ========== fixed params
-TOPIC_CALIB=CONF.calib_topic # show what pc to train
-TOPIC_ARM='/arm_pc' # show what pc in arm coord
 
 def main():
     rospy.init_node('pc_console')
     pc_processer = PC_Console()
     if PRE_CALIB:
-        pc_processer.calib(CONF.calib_file) # pre-calibration
-    # if PRE_SHIFT:
-    #     pc_processer.shift(SHIFT_DATA)  # pre-shift
+        pc_processer.calib(CONF.FILE_CALIB) # pre-calibration
     pc_processer.start()
 
 
 class PC_Console:
-    topic_raw=TOPIC_RAW # where is the raw point cloud?
+    topic_raw=TOPIC_FROM # where is the raw point cloud?
     def __init__(self):
         self.raw_pc_suber =None
         self.calib_info=None
-        self.pub_calib = rospy.Publisher(TOPIC_CALIB, PointCloud2, queue_size=1)
+        self.pub_calib = rospy.Publisher(CONF.TOPIC_CALIB, PointCloud2, queue_size=1)
         # record processed pc
         self.record_flag=False
         self.recorder=PC_Recorder(CONF.RECORD_DIR)
 
         self.last10=[]
         # move
-        self.move_detect=MOVE_DETECT
+        self.move_detect=CONF.MOVE_DETECT
         self.motion_dector=MoveDetector()
-        self.require_need=REQUIRE_NEED
-        self.detect=DETECT
+        self.require_need=CONF.REQUIRE_NEED
+        self.detect=CONF.DETECT
         self.segmentator=Segmentator()
         self.pub_seg = rospy.Publisher('/debug_segmentation', PointCloud2, queue_size=1)
         self.pub_require = rospy.Publisher('/debug_require', Int32, queue_size=1)
@@ -77,13 +64,13 @@ class PC_Console:
         self.point_selector=PointSelector()
 
         # to arm 
-        self.shift_puber = rospy.Publisher(TOPIC_ARM, PointCloud2, queue_size=1)
+        self.shift_puber = rospy.Publisher(CONF.TOPIC_ARM, PointCloud2, queue_size=1)
 
         # tele
-        if Start_MServer:
+        if CONF.Start_MServer:
             self.mserver = MServer()
             self.mserver.start()
-        if Start_MClient:
+        if CONF.Start_MClient:
             self.mclient=MClient()
             self.mclient.start()
         
@@ -116,28 +103,6 @@ class PC_Console:
             elif cmd[0]=='clear_calib':
                 print('clear calibration')
                 self.rm=self.height=None
-            elif cmd[0]=='shift':
-                print('set location shift')
-                # shift , variable parameters
-                loc=save_file=load_file=None
-                if len(cmd)>=2 and cmd[1].endswith('.npy'):
-                    # read from file. shift a.npy
-                    load_file=cmd[1]
-                else:
-                    # direct input.  shift 0 0 0 b.npy
-                    loc = [0,0,0]
-                    try:
-                        if len(cmd)>=2:
-                            loc[0]=float(cmd[1])
-                        if len(cmd)>=3:
-                            loc[1]=float(cmd[2])
-                        if len(cmd)>=4:
-                            loc[2]=float(cmd[3])
-                    except:
-                        pass
-                    if len(cmd)>=5:
-                        save_file=cmd[4]
-                self.shift(loc,load_file,save_file)
             elif cmd[0]=='show_calib':
                 self.show_calib=True
                 if len(cmd)>=2 and cmd[1]=='0':
@@ -179,18 +144,18 @@ class PC_Console:
                 print('not a cmd. continue.')
         # clear other instances
         self.raw_pc_suber.unregister()
-        if Start_MClient:
+        if CONF.Start_MClient:
             self.mclient.stop()
-        if Start_MServer:
+        if CONF.Start_MServer:
             self.mserver.stop()
 
     def calib(self, load_file=None, save_file=None):
-        if load_file: # calib from file
+        if load_file:
             try:
                 self.calib_info = np.load(load_file)
             except:
                 print('Error: cannot load calib')
-        else: # calib online
+        else:
             # 尝试读取一次数据
             delay=5
             self.calib_pc=None
@@ -214,7 +179,7 @@ class PC_Console:
             point_cloud.points = o3d.utility.Vector3dVector(x)
             # ===========           执行RANSAC平面分割           =====================
             distance_threshold=0.1 # 每条线内部是连续的，这里看的是线间距，0.1m，10cm比较合适
-            ransac_n=1000 # 至少必须多少个点在平面内。每次采集7000个点，至少有1000个属于平面内
+            ransac_n=1000 # 至少多少个点在平面内，每次采集7000个点，1000个属于平面可以
             num_iterations=1000
             plane_model, inliers = point_cloud.segment_plane(distance_threshold, ransac_n, num_iterations)
             if plane_model[0]<0:
@@ -288,7 +253,7 @@ class PC_Console:
         stamp = pc.header.stamp
         fi=pc.header.frame_id
         x = np_pc2xyzi(x)
-        # calib move pc to vertical, at 2 height
+        # calib move pc to be vertical, centerized, at height of 2m
         if self.calib_info is not None:
             xyz=x[:,:3]
             xyz=pc_calib(xyz,self.calib_info)
@@ -297,7 +262,7 @@ class PC_Console:
                 x = pc_bound(x,zb=(-1.65, 2))
             if CONF.DEBUG:
                 self.pub_calib.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(x), stamp=stamp,frame_id=fi))
-        if self.record_flag: # record after calibration, calib setup training coord
+        if self.record_flag: # record after calibration
             self.recorder.save_once(x)
             self.record_flag=False
         self.last10=insert_with_limit(self.last10,x,10)
@@ -307,15 +272,13 @@ class PC_Console:
         if self.move_detect:
             # ,xb=(-1.5,9), yb=(0.3, 10) . notice! this zb must change after arm motion box changed
             state=self.motion_dector.process(pc_bound(x, zb=(0.1,10)),t) # fix for arm motion noise
-            if Start_MClient:
-                self.mclient.set_moving(state==CONF.stop_state) # 1=Stop
-            if state!=CONF.stop_state:
+            if CONF.Start_MClient:
+                self.mclient.set_moving(state==CONF.MOVE_STATE_STOP) # 1=Stop
+            if state!=CONF.MOVE_STATE_STOP:
                 is_detect=False
                 # self.mclient.set_require(4) # error
-        if Start_MClient and self.require_need:
+        if CONF.Start_MClient and self.require_need:
             rq = self.mclient.get_require()
-            # if DEBUG:
-            #     print(f'req bit: {rq[0]}')
             if rq[0]!=1: # start detect
                 is_detect=False
                 if CONF.DEBUG:
@@ -323,45 +286,39 @@ class PC_Console:
             else:
                 if CONF.DEBUG:
                     self.pub_require.publish(Int32(1))
-                    t=time.strftime("%Y-%m-%d-%H-%M-%S")
-                    print(f'require: {t}')
+                    s1,s2=time_str()
+                    print(f'require: {s1}-{s2}')
+                    if not os.path.exists(pj(CONF.DIR_PC_LOG10,s1)):
+                        os.makedirs(pj(CONF.DIR_PC_LOG10,s1))
                     for i,xi in enumerate(self.last10):
                         pc = o3d.geometry.PointCloud()
                         pc.points = o3d.utility.Vector3dVector(xi[:,:3]) # remove intensity
-                        o3d.io.write_point_cloud(pj(f'/home/{CONF.usr_name}/datasets/pc_log10',f'{t}_{i}.pcd'),pc)
+                        o3d.io.write_point_cloud(pj(CONF.DIR_PC_LOG10,s1,f'{s2}_{i}.pcd'),pc)
         if is_detect and self.detect:
             # if Start_MClient:
             #     self.mclient.set_require(2) # busy
-            xis=[]
-            for i in range(min(3,len(self.last10))):
-                x_=self.last10[i]
-                xyz = pc_downsample(x_[:,:3],7000)
-                xi = self.segmentator.process(xyz)
-                xis.append(xi)
-            xi=xis[0]
+            xi = self.segmentator.process(x[:,:3])
             if CONF.DEBUG:
                 color_controller=np.array([[0,0,0,0],[0,0,0,7]])
                 xi_=np.concatenate([xi,color_controller],axis=0)
-                self.pub_seg.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(xi_), frame_id=CONF.lidar_frame))
-            ps=self.point_selector.get_points(xis)
-            if Start_MClient:
+                self.pub_seg.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(xi_), frame_id=CONF.FRAME_LIDAR))
+            ps=self.point_selector.get_points(xi)
+            if CONF.Start_MClient:
                 if ps is not None:
                     ps=lidar2arm(ps)
                     ps = (ps*1000).astype(np.int32)
                     for i,p in enumerate(ps):
                         self.mclient.setpoint(i,p)
-                    self.mclient.set_require(3) # over
+                    self.mclient.set_require(CONF.REQUIRE_SUCCESS) # over
                     print(f'task success')
                 else:
-                    self.mclient.set_require(4) # error
+                    self.mclient.set_require(CONF.REQUIRE_FAIL) # error
                     print(f'task fail')
 
         # shift move pc to arm coord
         # if DEBUG:
         #     x[:,:3] = lidar2arm(x[:,:3])
         #     self.shift_puber.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(x), stamp=stamp,frame_id=fi))
-
-
 
 if __name__ == "__main__":
     main()

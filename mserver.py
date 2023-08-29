@@ -33,7 +33,7 @@ class MServer:
         asyncio.run(StartAsyncTcpServer(
             context=context,  # Data storage
             identity=None,  # server identify
-            address=(CONF.mip, CONF.mport),  # listen address
+            address=(CONF.MODBUS_IP, CONF.MODBUS_PORT),  # listen address
             framer=None,  # The framer strategy to use
             allow_reuse_address=True,  # allow the reuse of an address
             # timeout=1,  # waiting time for request to complete

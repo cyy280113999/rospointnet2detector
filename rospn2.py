@@ -13,7 +13,7 @@ import global_config as CONF
 
 # module debug: where is the point cloud?
 # topic_pc_from='/rslidar_points'
-topic_pc_from='/off_line'
+TOPIC_TEST_FROM=CONF.TOPIC_OFFLINE
 topic_seg='/segmentation'
 # nn model
 # model_path='./model/seg_model.pth'
@@ -38,7 +38,7 @@ class PC_Processer:
         self.segmentator=Segmentator()
 
     def start(self):
-        self.pc_sub = rospy.Subscriber(topic_pc_from, PointCloud2, self.process, queue_size=1, buff_size=2 ** 24)
+        self.pc_sub = rospy.Subscriber(TOPIC_TEST_FROM, PointCloud2, self.process, queue_size=1, buff_size=2 ** 24)
     def stop(self):
         self.pc_sub.unregister()
     def send(self,pc):
@@ -61,11 +61,12 @@ class Segmentator:
         x=torch.zeros((1,3,1000),device=device) # run empty once, to escape from first-run-delay
         self.net(x)
     def process(self, x):
-        xt=normalize(x,self.mean,self.std)
+        x = pc_downsample(x,7000) # point count consist with training
+        xt=normalize(x,self.mean,self.std) # point scale consist..
         xt=torch.from_numpy(xt.T).float().to(device).unsqueeze(0)
         seg = self.net(xt)
         seg = seg.squeeze(0).argmax(axis=-1).cpu().numpy()
-        xi=np.concatenate([x,seg.reshape(-1,1).astype(np.float32)],axis=1)
+        xi=np.concatenate([x,seg.reshape(-1,1).astype(np.float32)],axis=1) # concate result
         return xi
 
        

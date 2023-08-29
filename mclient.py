@@ -5,7 +5,6 @@ from pymodbus.client import ModbusTcpClient
 import numpy as np
 import global_config as CONF
 
-bit_move=89
 
 def encode_value(value):# int32 to DWord * 2
     high_word = (value >> 16) & 0xFFFF  # 取高16位
@@ -21,8 +20,8 @@ def decode_value(data):
 class MClient:
     def __init__(self):
         self.client = ModbusTcpClient(
-            host=CONF.mip,
-            port=CONF.mport,
+            host=CONF.MODBUS_IP,
+            port=CONF.MODBUS_PORT,
             # Common optional paramers:
             # framer=None,# framer must not None, default is socket framer
             #    timeout=10,
@@ -34,18 +33,28 @@ class MClient:
             #    source_address=("localhost", 0),
         )
     def get_require(self):
-        result = self.client.read_holding_registers(10,1)
+        result = self.client.read_holding_registers(CONF.MODBUS_WORD_REQUIRE,1)
         ans = result.registers
         if result.isError():
             print("读取错误：", result)
             ans = None
         return ans
+    def parse_require(self,x):
+        req=0
+        n=0
+        if x in [CONF.REQUIRE_201,CONF.REQUIRE_202,CONF.REQUIRE_203]:
+            req=1
+            n=2
+        elif x in [CONF.REQUIRE_13]:
+            req=1
+            n=13
+        return req,n
     def set_require(self, state=3):
-        result = self.client.write_registers(10,[state])
+        result = self.client.write_registers(CONF.MODBUS_WORD_REQUIRE,[state])
         if result.isError():
             print("写入错误：", result)
     def set_moving(self, flag=True):
-        result = self.client.write_registers(bit_move,[1 if flag else 0])
+        result = self.client.write_registers(CONF.MODBUS_WORD_MOVE,[1 if flag else 0])
         if result.isError():
             print("写入错误：", result)
     def setpoint(self,n=0,p=[0,0,0]): # n < 13
@@ -54,11 +63,11 @@ class MClient:
         data=[]
         for i in range(3):
             data+=list(encode_value(p[i]))
-        result = self.client.write_registers(n*6+11,data) # write at 10
+        result = self.client.write_registers(CONF.MODBUS_WORD_POINTS+n*6,data) # write at 10
         if result.isError():
             print("写入错误：", result)
     def getpoint(self,n=0):
-        result = self.client.read_holding_registers(n*6+11,6)
+        result = self.client.read_holding_registers(CONF.MODBUS_WORD_POINTS+n*6,6)
         if result.isError():
             print("读取错误：", result)
         else:

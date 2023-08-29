@@ -24,7 +24,7 @@ if DSChooseFirst:
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc063003' # 382  
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc_filtered' # 1100
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc0701static' # 382
-    # pointcloud_dir=f'/home/{usr_name}/datasets/pc071803'
+    # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc071803'
     # pointcloud_dir=f'/mnt/d/wsl_tools/pc082303'
     pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc082601'
     has_label=False # raw pc has no label
@@ -83,7 +83,7 @@ def main():
         keepChannel=keepChannel,
         has_label=has_label,
         )
-    dataset.get_normalization(CONF.norm_file)
+    dataset.get_normalization(CONF.FILE_NORM)
     rospy.init_node('ros_offline_publisher', anonymous=False)
     pc_puber = PC_Offline_Publisher(dataset,rate)
     pc_puber.start()
@@ -146,7 +146,7 @@ class PC_Offline_Publisher:
         else:
             x_pc = np_xyz2pc(x_np)
         t = RosTime.from_sec(time.time())
-        pc = rosnp.point_cloud2.array_to_pointcloud2(x_pc, stamp=t,frame_id=CONF.lidar_frame)
+        pc = rosnp.point_cloud2.array_to_pointcloud2(x_pc, stamp=t,frame_id=CONF.FRAME_LIDAR)
         self.pc_pub.publish(pc)
         self.counter = (self.counter+1)%len(self.dataset)
 

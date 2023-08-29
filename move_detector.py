@@ -20,21 +20,15 @@ import global_config as CONF
 # 6 truck position stop # wait
 
 # ====== c params
-POSITION_DETECT=CONF.POSITION_DETECT
+
 
 PLOT_MAX=3
-tolerance_c = 0.40 # not much over 0.2
-debug_c_amp=PLOT_MAX/tolerance_c
-tolerance_v = 0.02
-debug_v_amp=PLOT_MAX/tolerance_v # the maximun of tolerance is shown as PLOT_MAX
-tolerance_p = 0.10
-debug_p_amp=PLOT_MAX/tolerance_p
+debug_c_amp=PLOT_MAX/CONF.MOVE_TOLERANCE_CENTER
+debug_v_amp=PLOT_MAX/CONF.MOVE_TOLERANCE_VELOCITY # the maximun of tolerance is shown as PLOT_MAX
+debug_p_amp=PLOT_MAX/CONF.MOVE_TOLERANCE_POSITION
 # where is the point cloud?
-topic_pc_from='/pointclouds'
-# when are frames sampled
-t_current=0.01
-t_last=1.0
-# ======fix params
+TOPIC_TEST='/pointclouds'
+
 
 
 def main():
@@ -50,7 +44,7 @@ class PC_Processer:
         self.pc_sub=None
         self.detector=MoveDetector()
     def start(self):
-        self.pc_sub = rospy.Subscriber(topic_pc_from, PointCloud2, self.send, queue_size=1, buff_size=2 ** 24)
+        self.pc_sub = rospy.Subscriber(TOPIC_TEST, PointCloud2, self.send, queue_size=1, buff_size=2 ** 24)
     def stop(self):
         self.pc_sub.unregister()
     def send(self,pc):
@@ -83,7 +77,7 @@ class MoveDetector:
         x = x[:,::-1] # swap xy axis, new x is old y
         x[:,1] = -x[:,1] # flip new y(old x, depth)
         if len(x)<=0: # no points
-            print(f'frame {t} has no enough points')
+            print(f'move-detect: frame {t} has no enough points')
             return state
         self.time_list=insert_with_limit(self.time_list,t,100)
         self.pc2d_list=insert_with_limit(self.pc2d_list, x, 100) # notice pc2d is at new coordinate.
@@ -96,17 +90,17 @@ class MoveDetector:
             state=0
         elif -1.7<=center_y<-1.0: # sth. occur
             state=1
-        elif -1.0<=center_y<-0.5: # possibly truck at one side
+        elif -1.0<=center_y<0: # possibly truck at one side
             state=2
-        elif center_y>=-0.5: # truck is at proper position(center), run moving estimation
+        elif center_y>=0: # truck is at proper position(center), run moving estimation
             state=3
         if state!=3:
             self.center_list.clear()
         else:
-            ind_c = find_nearst(self.time_list,t-t_current).item()
-            ind_l = find_nearst(self.time_list,t-t_last).item()
+            ind_c = find_nearst(self.time_list,t-CONF.MOVE_FRAME_CURRENT).item()
+            ind_l = find_nearst(self.time_list,t-CONF.MOVE_FRAME_BEFORE).item()
             if ind_c==ind_l:
-                print('time interval is too long')
+                print('move-detect: time interval is too long')
                 return state
             # if ind_c==ind_l: # can not find two different frames
             #     ind_l+=1
@@ -119,7 +113,7 @@ class MoveDetector:
             move_dist=np.mean(self.center_list)
             if CONF.DEBUG:
                 self.pub_move_c.publish(Float32(clipMM(debug_c_amp*move_dist)))
-            if move_dist <= tolerance_c:
+            if move_dist <= CONF.MOVE_TOLERANCE_CENTER:
                 state = 4
         # must notice not all truck body can observed by lidar,
         # when filled view point, mass center not move clearly, use icp to enhance judgement
@@ -131,27 +125,27 @@ class MoveDetector:
             source = self.pc2d_list[ind_l] # source position is at a gap time before
             dist, _ = icp_simplified(source, target)
             if abs(dist)>0.5:
-                print(f'dist overflow: {dist}')
+                print(f'move-detect: dist overflow: {dist}')
                 dist=max(0.5,min(-0.5,dist))
             v=dist/(self.time_list[ind_c]-self.time_list[ind_l])
             self.v_list=insert_with_limit(self.v_list,v,3)
             v=np.mean(self.v_list)
-            if abs(v)<=tolerance_v:
+            if abs(v)<=CONF.MOVE_TOLERANCE_VELOCITY:
                 state=5
-                if POSITION_DETECT and self.stop_position is None:
+                if CONF.MOVE_POSITION and self.stop_position is None:
                     self.stop_position = self.pc2d_list[ind_c] # record stop position
             else:
                 self.stop_position = None
         if state==5 and self.stop_position is not None:
             source = self.stop_position
             p, _ = icp_simplified(source, target) # which dist + source == target ?
-            if abs(p)<=tolerance_p:
+            if abs(p)<=CONF.MOVE_TOLERANCE_POSITION:
                 state=6
         if CONF.DEBUG:
             self.pub_state.publish(Int32(state))
             if state>=4:
                 self.pub_move_v.publish(Float32(clipMM(v*debug_v_amp)))
-            if POSITION_DETECT and self.stop_position is not None:
+            if CONF.MOVE_POSITION and self.stop_position is not None:
                 self.pub_move_p.publish(Float32(clipMM(p*debug_p_amp)))
         return state
 
