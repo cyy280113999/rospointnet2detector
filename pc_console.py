@@ -183,19 +183,20 @@ class PC_Console:
             self.mclient.stop()
         if Start_MServer:
             self.mserver.stop()
-    def save_calib_pc(self, pc2):
-        self.calib_pc=pc2
+
     def calib(self, load_file=None, save_file=None):
-        if load_file:
+        if load_file: # calib from file
             try:
                 self.calib_info = np.load(load_file)
             except:
                 print('Error: cannot load calib')
-        else:
+        else: # calib online
             # 尝试读取一次数据
             delay=5
             self.calib_pc=None
-            pc_sub_once = rospy.Subscriber(self.topic_raw, PointCloud2, self.save_calib_pc, queue_size=1, buff_size=2 ** 24)
+            def save_calib_pc(pc2):
+                self.calib_pc=pc2
+            pc_sub_once = rospy.Subscriber(self.topic_raw, PointCloud2, save_calib_pc, queue_size=1, buff_size=2 ** 24)
             t_start = time.time()
             while True:
                 if self.calib_pc is not None:
@@ -213,7 +214,7 @@ class PC_Console:
             point_cloud.points = o3d.utility.Vector3dVector(x)
             # ===========           执行RANSAC平面分割           =====================
             distance_threshold=0.1 # 每条线内部是连续的，这里看的是线间距，0.1m，10cm比较合适
-            ransac_n=1000 # 至少多少个点在平面内，每次采集7000个点，1000个属于平面可以
+            ransac_n=1000 # 至少必须多少个点在平面内。每次采集7000个点，至少有1000个属于平面内
             num_iterations=1000
             plane_model, inliers = point_cloud.segment_plane(distance_threshold, ransac_n, num_iterations)
             if plane_model[0]<0:
