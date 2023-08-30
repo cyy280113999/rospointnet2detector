@@ -14,7 +14,11 @@ import time
 from transfer_dataset import np_xyz2pc,np_xyzi2pc, strSort
 import shutil
 
-# most saved pc are empty. this remove the empty manually. 
+# ======== pc dataset filter
+# use recorder to save pcs.
+# most saved pc are unused(repeatedly). 
+# this filter show each pc in rviz, 
+# wait keyboard to manually keep those useful pcs. 
 
 source_dir='/home/cyy/datasets/pc0602' # where is the point cloud?
 topic_pc_from='/rslidar_points' # visualization topic
