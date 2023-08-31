@@ -1,3 +1,4 @@
+# rename: global_config_default.py --> global_config.py
 # usage: import global_config as CONF
 import os
 pj=lambda *args:os.path.join(*args)
