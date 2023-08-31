@@ -90,7 +90,7 @@ class PointSelector:
                     pc_plot=np.vstack(patches)+np.array([[-0.4,0,0,0]])
                     pc_log=np.vstack([pc_log,pc_plot])
                     self.pub_patch.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.FRAME_LIDAR))
-                if len(patches)<8: # less than half
+                if len(patches)<n//2: # less than half
                     points=None
                 else:
                     # get max point of each patch
@@ -103,20 +103,13 @@ class PointSelector:
                         patch[ind,3]=0 # point with zero intensity
                         points.append(patch[ind])
                     points=np.vstack(points)
-                    if len(points)<15: # fill the list, ensure enough to 15
-                        count_lack=15-len(points)
+                    if len(points)<n//2: # fill the list, ensure enough to 15
+                        count_lack=n//2-len(points)
                         ind_add=np.random.choice(len(points),count_lack)
                         points=np.vstack([points,points[ind_add]])
-                    points=points[np.argsort(points[:,1])] # sort by y
+                    points=points[np.argsort(points[:,1])[::-1]] # sort by y
                     if n==2:
-                        indices=[8,11]
-                        points= [points[ind]for ind in indices if points[ind] is not None]
-                        points = np.vstack(points)
-                    elif n==13:
-                        indices=[0,1,2,3,4,5,6,7,8,9,10,11,13]
-                        points=points[indices]
-                    else:
-                        points=None
+                        points = points[[0,-1]]
                     if CONF.DEBUG:
                         pc_plot=points+np.array([[-0.8,0,0,0]])
                         pc_log=np.vstack([pc_log,pc_plot])

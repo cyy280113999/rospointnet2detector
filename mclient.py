@@ -34,7 +34,7 @@ class MClient:
         )
     def get_require(self):
         result = self.client.read_holding_registers(CONF.MODBUS_WORD_REQUIRE,1)
-        ans = result.registers
+        ans = result.registers[0] # get first word, as uint16
         if result.isError():
             print("读取错误：", result)
             ans = None
@@ -60,9 +60,7 @@ class MClient:
     def setpoint(self,n=0,p=[0,0,0]): # n < 13
         if isinstance(p, np.ndarray):
             p = p.tolist()
-        data=[]
-        for i in range(3):
-            data+=list(encode_value(p[i]))
+        data=list(map(encode_value,p))
         result = self.client.write_registers(CONF.MODBUS_WORD_POINTS+n*6,data) # write at 10
         if result.isError():
             print("写入错误：", result)

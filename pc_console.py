@@ -279,7 +279,8 @@ class PC_Console:
                 # self.mclient.set_require(4) # error
         if CONF.Start_MClient and self.require_need:
             rq = self.mclient.get_require()
-            if rq[0]!=1: # start detect
+            rq,n=self.mclient.parse_require(rq)
+            if rq!=1: # start detect
                 is_detect=False
                 if CONF.DEBUG:
                     self.pub_require.publish(Int32(0))
@@ -302,7 +303,7 @@ class PC_Console:
                 color_controller=np.array([[0,0,0,0],[0,0,0,7]])
                 xi_=np.concatenate([xi,color_controller],axis=0)
                 self.pub_seg.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(xi_), frame_id=CONF.FRAME_LIDAR))
-            ps=self.point_selector.get_points(xi)
+            ps=self.point_selector.get_points(xi,n)
             if CONF.Start_MClient:
                 if ps is not None:
                     ps=lidar2arm(ps)
