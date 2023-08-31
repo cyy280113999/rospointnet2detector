@@ -4,6 +4,7 @@ import threading
 import numpy as np
 import open3d as o3d
 from scipy.spatial.transform import Rotation
+import tqdm
 import rospy
 import ros_numpy as rosnp
 from std_msgs.msg import String, Int32
@@ -226,22 +227,22 @@ class PC_Console:
                 print('Error: cannot save calib')
     def manual_record(self):
         while True:
-            print(f'{time.asctime()} Press . to record, 3 to exit.')
+            print(f'{time_str()} Press . to record, 3 to exit.')
             cmd=input()
             if not cmd:
                 continue
             if cmd[0]=='.':
                 self.record_flag=True
             elif cmd[0]=='3':
-                print(f'{time.asctime()} Shutting Down.')
+                print(f'{time_str()} Shutting Down.')
                 break
     def auto_record(self,rate=1, seconds=20):
         rater=rospy.Rate(rate)
-        print(f'{time.asctime()} Auto Recording Start.')
-        for _ in range(int(rate*seconds)):
+        tqdm.tqdm.write(f'{time_str()} Auto Recording Start.')
+        for _ in tqdm.tqdm(range(int(rate*seconds)),desc='recording..',ncols=80,position=1):
             self.record_flag=True
             rater.sleep()
-        print(f'{time.asctime()} Auto Recording Finish.')
+        tqdm.tqdm.write(f'{time_str()} Auto Recording Finish.')
 
     def process(self, pc:PointCloud2):
         x = rosnp.point_cloud2.pointcloud2_to_array(pc)
@@ -272,6 +273,7 @@ class PC_Console:
             if state!=CONF.MOVE_STATE_STOP:
                 is_detect=False
                 # self.mclient.set_require(4) # error
+        n=13
         if CONF.Start_MClient and self.require_need:
             rq = self.mclient.get_require()
             rq,n=self.mclient.parse_require(rq)
@@ -282,8 +284,8 @@ class PC_Console:
             else:
                 if CONF.DEBUG:
                     self.pub_require.publish(Int32(1))
-                    s1,s2=time_str()
-                    print(f'require: {s1}-{s2}')
+                    s1,s2=day_second()
+                    print(f'require: {s1}_{s2}')
                     if not os.path.exists(pj(CONF.DIR_PC_LOG10,s1)):
                         os.makedirs(pj(CONF.DIR_PC_LOG10,s1))
                     for i,xi in enumerate(self.last10):

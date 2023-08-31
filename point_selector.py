@@ -119,7 +119,7 @@ class PointSelector:
             pc = o3d.geometry.PointCloud()
             pc.points = o3d.utility.Vector3dVector(pc_log[:,:3]) # remove intensity
             pc.colors=o3d.utility.Vector3dVector([intens2rgb[int(i)]for i in pc_log[:,3]])# keep intensity
-            s1,s2=time_str()
+            s1,s2=day_second()
             if not os.path.exists(pj(CONF.DIR_PC_LOG,s1)):
                 os.makedirs(pj(CONF.DIR_PC_LOG,s1))
             o3d.io.write_point_cloud(pj(CONF.DIR_PC_LOG,s1,f'{s2}.pcd'),pc)

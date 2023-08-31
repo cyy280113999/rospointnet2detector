@@ -1,10 +1,13 @@
 import os
 import time
+import tqdm
 import rospy
 import numpy as np
 import ros_numpy as rosnp
 from sensor_msgs.msg import PointCloud2
+import open3d as o3d
 import global_config as CONF
+from transfer_dataset import time_str
 pj=lambda *args:os.path.join(*args)
 
 # record pc from topic after calibration
@@ -43,8 +46,11 @@ class PC_Recorder:
         else:
             self.counter=0
     def save_once(self, x):
-        np.save(pj(self.record_dir,f'pc_{self.counter:06d}'),x)
-        print(f'{time.asctime()} Record once at {self.counter}.')
+        pcd = o3d.t.geometry.PointCloud(o3d.core.Tensor(x[:,:3]))
+        if x.shape[1]==4:
+            pcd.point.intensity=o3d.core.Tensor(x[:,3:4]) # this name "intensity" matches with ROS
+        o3d.t.io.write_point_cloud(pj(self.record_dir,f'pc_{self.counter:06d}.pcd'),pcd,write_ascii=False)
+        tqdm.tqdm.write(f'{time_str()} Record once at {self.counter}.')
         self.counter+=1
 
 if __name__ == "__main__":
