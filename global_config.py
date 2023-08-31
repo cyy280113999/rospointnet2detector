@@ -7,6 +7,7 @@ AtRemote=True # is server at remote ?
 # usr_name = 'cyy'
 usr_name = 'cyy' if not AtRemote else 'lhk'
 # ==main
+
 ON_LINE=True  # where is pc?
 Start_MServer=False
 Start_MClient=True
