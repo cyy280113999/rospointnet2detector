@@ -1,9 +1,8 @@
 import os
-import sys
 import time
-pj=lambda *args:os.path.join(*args)
 import numpy as np
 import torch
+pj=lambda *args:os.path.join(*args)
 
 def pc_downsample(x, npoints=4000):
     if len(x)>npoints:

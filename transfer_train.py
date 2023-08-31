@@ -1,19 +1,10 @@
 import os
-import sys
-p = lambda f: os.path.abspath(f)
-pj=lambda *args:os.path.join(*args)
-ROOT_DIR = os.path.dirname(p(__file__))
-os.chdir(ROOT_DIR)
-sys.path.append(ROOT_DIR)
-sys.path.append(pj(ROOT_DIR, 'Pointnet2/models'))
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as nf
 import torch.optim as optim
 import torch.utils.data
-
 from transfer_dataset import TransferDataset,  Balence, FocalLoss, Class_acc
 from transfer_pn2 import TransferPn2
-
 
 dataset_path='/home/cyy/datasets/pc071803mix'
 transfer=False

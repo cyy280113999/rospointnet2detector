@@ -1,10 +1,4 @@
 import os
-import sys
-p = lambda f: os.path.abspath(f)
-pj=lambda *args:os.path.join(*args)
-BASE_DIR = os.path.dirname(p(__file__))
-os.chdir(BASE_DIR)
-sys.path.append(BASE_DIR)
 import time
 import threading
 import numpy as np
@@ -22,6 +16,7 @@ from move_detector import MoveDetector
 from rospn2 import Segmentator
 from point_selector import PointSelector
 import global_config as CONF
+pj=lambda *args:os.path.join(*args)
 
 # -- where is the pc?
 if CONF.ON_LINE:

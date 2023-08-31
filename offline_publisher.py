@@ -1,10 +1,4 @@
 import os
-import sys
-p = lambda f: os.path.abspath(f)
-pj=lambda *args:os.path.join(*args)
-BASE_DIR = os.path.dirname(p(__file__))
-os.chdir(BASE_DIR)
-sys.path.append(BASE_DIR)
 import rospy
 import numpy as np
 import ros_numpy as rosnp
@@ -13,8 +7,8 @@ from sensor_msgs.msg import PointCloud2
 import time
 from transfer_dataset import TransferDataset,np_xyz2pc,np_xyzi2pc, pc_calib
 from genpy.rostime import Time as RosTime
-
 import global_config as CONF
+pj=lambda *args:os.path.join(*args)
 
 rate=10
 DSChooseFirst=True

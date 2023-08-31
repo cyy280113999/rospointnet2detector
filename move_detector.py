@@ -10,6 +10,7 @@ from threading import Timer
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 import global_config as CONF
+
 # ===== note
 # 0 no object
 # 1 unrecogized object

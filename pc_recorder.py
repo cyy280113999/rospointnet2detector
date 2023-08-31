@@ -1,11 +1,11 @@
 import os
 import time
-pj=lambda *args:os.path.join(*args)
 import rospy
 import numpy as np
 import ros_numpy as rosnp
 from sensor_msgs.msg import PointCloud2
 import global_config as CONF
+pj=lambda *args:os.path.join(*args)
 
 # record pc from topic after calibration
 

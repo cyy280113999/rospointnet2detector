@@ -3,9 +3,8 @@ import torch.nn as nn
 import torch.nn.parallel
 import torch.nn.functional as F
 import torch.utils.data
-
 from pointnet2_utils import PointNetSetAbstractionMsg, PointNetSetAbstraction, PointNetFeaturePropagation
-
+# copy, modified from pointnet2
 class TransferPn2(nn.Module):
     def __init__(self,inc=3,outc=50, pretrained_state_dict=None):
         super(TransferPn2, self).__init__()
@@ -52,7 +51,7 @@ class TransferPn2(nn.Module):
         x = x.permute(0, 2, 1).contiguous()
         return x
     
-    def in2k(self,k=3):
+    def in2k(self,k=3): # change input channel
         assert k>=3
         with torch.no_grad():
             for convs in self.sa1.conv_blocks:
@@ -63,13 +62,13 @@ class TransferPn2(nn.Module):
                 new_conv.bias.data=old.bias
                 convs[0]=new_conv
 
-    def out2k(self,k=2):
+    def out2k(self,k=2): # change classes num
         self.fix_all(True)
         self.conv2 = torch.nn.Conv1d(128, k, 1)
         torch.nn.init.xavier_uniform_(self.conv2.weight)
         torch.nn.init.zeros_(self.conv2.bias)
 
-    def fix_all(self,fix=True):
+    def fix_all(self,fix=True): # fix para when training
         for para in self.parameters():
             para.requires_grad=not fix
     def fix_stage1(self,fix=True):

@@ -1,6 +1,3 @@
-import os
-import sys
-
 import rospy
 import numpy as np
 import ros_numpy as rosnp
@@ -8,7 +5,6 @@ import torch
 from sensor_msgs.msg import PointCloud2
 from transfer_pn2 import TransferPn2
 from transfer_dataset import *
-import open3d as o3d
 import global_config as CONF
 
 # module debug: where is the point cloud?
