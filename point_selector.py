@@ -116,13 +116,12 @@ class PointSelector:
                         self.pub_max.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.FRAME_LIDAR))
                         self.pub_log.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_log),frame_id=CONF.FRAME_LIDAR))
         if CONF.DEBUG:
-            pc = o3d.geometry.PointCloud()
-            pc.points = o3d.utility.Vector3dVector(pc_log[:,:3]) # remove intensity
-            pc.colors=o3d.utility.Vector3dVector([intens2rgb[int(i)]for i in pc_log[:,3]])# keep intensity
+            pcd = o3d.t.geometry.PointCloud(o3d.core.Tensor(pc_log[:,:3])) # set position
+            pcd.point.intensity=o3d.core.Tensor(pc_log[:,3:4]) # set intensity 
             s1,s2=day_second()
             if not os.path.exists(pj(CONF.DIR_PC_LOG,s1)):
                 os.makedirs(pj(CONF.DIR_PC_LOG,s1))
-            o3d.io.write_point_cloud(pj(CONF.DIR_PC_LOG,s1,f'{s2}.pcd'),pc)
+            o3d.t.io.write_point_cloud(pj(CONF.DIR_PC_LOG,s1,f'{s2}.pcd'),pcd,write_ascii=False)
         if points is not None and points.shape[1]==4:
             points[:,:3] # remove intensity
         return points

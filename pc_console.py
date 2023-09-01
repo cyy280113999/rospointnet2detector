@@ -47,7 +47,7 @@ class PC_Console:
         self.record_flag=False
         self.recorder=PC_Recorder(CONF.RECORD_DIR)
 
-        self.last10=[]
+        self.pc_history=[]
         # move
         self.move_detect=CONF.MOVE_DETECT
         self.motion_dector=MoveDetector()
@@ -261,7 +261,7 @@ class PC_Console:
         if self.record_flag: # record after calibration
             self.recorder.save_once(x)
             self.record_flag=False
-        self.last10=insert_with_limit(self.last10,x,10)
+        self.pc_history=insert_with_limit(self.pc_history,x,10)
         # net
         t = stamp.to_time()
         is_detect=True
@@ -288,18 +288,18 @@ class PC_Console:
                     print(f'require: {s1}_{s2}')
                     if not os.path.exists(pj(CONF.DIR_PC_LOG10,s1)):
                         os.makedirs(pj(CONF.DIR_PC_LOG10,s1))
-                    for i,xi in enumerate(self.last10):
-                        pc = o3d.geometry.PointCloud()
-                        pc.points = o3d.utility.Vector3dVector(xi[:,:3]) # remove intensity
-                        o3d.io.write_point_cloud(pj(CONF.DIR_PC_LOG10,s1,f'{s2}_{i}.pcd'),pc)
+                    for i,xi in enumerate(self.pc_history):
+                        pcd = o3d.t.geometry.PointCloud(o3d.core.Tensor(xi[:,:3])) # set position
+                        pcd.point.intensity=o3d.core.Tensor(xi[:,3:4]) # set intensity 
+                        o3d.t.io.write_point_cloud(pj(CONF.DIR_PC_LOG10,s1,f'{s2}_{i}.pcd'),pcd,write_ascii=False)
         if is_detect and self.detect:
             # if Start_MClient:
             #     self.mclient.set_require(2) # busy
             xi = self.segmentator.process(x[:,:3])
             if CONF.DEBUG:
                 color_controller=np.array([[0,0,0,0],[0,0,0,7]])
-                xi_=np.concatenate([xi,color_controller],axis=0)
-                self.pub_seg.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(xi_), frame_id=CONF.FRAME_LIDAR))
+                self.pub_seg.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(
+                    np.concatenate([xi,color_controller],axis=0)), frame_id=CONF.FRAME_LIDAR))
             ps=self.point_selector.get_points(xi,n)
             if CONF.Start_MClient:
                 if ps is not None:

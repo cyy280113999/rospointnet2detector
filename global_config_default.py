@@ -61,7 +61,7 @@ MODBUS_MOVE_STOP=0
 
 # ==log
 # where to save pc after calibration. control in console
-RECORD_DIR = f'/home/{usr_name}/datasets/saved_npys'
+RECORD_DIR = f'/home/{usr_name}/datasets/saved_pcds'
 DIR_PC_LOG=f'/home/{usr_name}/datasets/pc_log'
 DIR_PC_LOG10=f'/home/{usr_name}/datasets/pc_log10'
 
