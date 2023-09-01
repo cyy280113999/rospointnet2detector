@@ -5,7 +5,7 @@ import ros_numpy as rosnp
 import threading
 from sensor_msgs.msg import PointCloud2
 import time
-from transfer_dataset import TransferDataset,np_xyz2pc,np_xyzi2pc, pc_calib
+from transfer_dataset import *
 from genpy.rostime import Time as RosTime
 import open3d as o3d
 import global_config as CONF
@@ -39,7 +39,7 @@ rotation=False
 keepChannel=4
 
 # where to
-topic_pc_from='/off_line'
+CONF.TOPIC_OFFLINE
 
 # label_color_map=(
 #     (207,   207,    207),
@@ -77,7 +77,7 @@ def main():
 class PC_Offline_Publisher:
     def __init__(self, source_dir):
         self.rater=rospy.Rate(OFFLINE_RATE)
-        self.pc_pub = rospy.Publisher(topic_pc_from, PointCloud2, queue_size=1)
+        self.pc_pub = rospy.Publisher(CONF.TOPIC_OFFLINE, PointCloud2, queue_size=1)
         self.counter=0
         self.source_dir=source_dir
         fs=list(os.listdir(source_dir))

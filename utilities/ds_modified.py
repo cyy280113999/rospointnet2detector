@@ -8,9 +8,9 @@ sys.path.append(BASE_DIR)
 import numpy as np
 import tqdm
 
-# source_dir='/home/cyy/datasets/pc063003'
+source_dir='/home/cyy/datasets/pc063003'
 files=[e.path for e in os.scandir(source_dir)]
 for p in tqdm.tqdm(files):
     x = np.load(pj(source_dir,p))
-    x[:,1]=-x[:,1]
+    # x[:,1]=-x[:,1] # swap y axis. along the road
     np.save(p,x)

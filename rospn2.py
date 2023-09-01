@@ -13,7 +13,7 @@ TOPIC_TEST_FROM=CONF.TOPIC_OFFLINE
 topic_seg='/segmentation'
 # nn model
 # model_path='./model/seg_model.pth'
-model_path='./model/final2.pth'
+model_path='./model/final.pth'
 inc=3
 outc=8
 device ='cuda'
