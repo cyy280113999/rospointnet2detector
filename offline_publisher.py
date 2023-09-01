@@ -7,21 +7,23 @@ from sensor_msgs.msg import PointCloud2
 import time
 from transfer_dataset import TransferDataset,np_xyz2pc,np_xyzi2pc, pc_calib
 from genpy.rostime import Time as RosTime
+import open3d as o3d
 import global_config as CONF
 pj=lambda *args:os.path.join(*args)
 
-rate=10
+OFFLINE_RATE=3
 DSChooseFirst=True
 if DSChooseFirst:
     # pointcloud_dir=f'/home/{usr_name}/datasets/saved_npys' # 4000
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc0602' # 1100
-    pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0602f' # 500
+    # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0602f' # 500
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc063003' # 382  
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc_filtered' # 1100
     # pointcloud_dir=f'/home/{usr_name}/datasets/pc0701static' # 382
     # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc071803'
     # pointcloud_dir=f'/mnt/d/wsl_tools/pc082303'
     # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc082601'
+    pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc071803_pcd/' # 500
     has_label=False # raw pc has no label
 else:
     # -- here are labeled pointclouds
@@ -67,40 +69,26 @@ topic_pc_from='/off_line'
             # x_np[:,:3]=xyz
 
 def main():
-    dataset = TransferDataset(
-        root=pointcloud_dir,
-        label_filter=None,
-        label_map=None,
-        npoints=npoints,
-        normalization=normalization,
-        augmentation=augmentation,
-        rotation=rotation,
-        keepChannel=keepChannel,
-        has_label=has_label,
-        )
-    dataset.get_normalization(CONF.FILE_NORM)
     rospy.init_node('ros_offline_publisher', anonymous=False)
-    pc_puber = PC_Offline_Publisher(dataset,rate)
+    pc_puber = PC_Offline_Publisher(source_dir=pointcloud_dir)
     pc_puber.start()
     pc_puber.command_loop()
 
-
 class PC_Offline_Publisher:
-    def __init__(self, dataset,rate=1):
-        self.rater=rospy.Rate(rate)
+    def __init__(self, source_dir):
+        self.rater=rospy.Rate(OFFLINE_RATE)
         self.pc_pub = rospy.Publisher(topic_pc_from, PointCloud2, queue_size=1)
         self.counter=0
-        self.dataset = dataset
-        self.next=True
+        self.source_dir=source_dir
+        fs=list(os.listdir(source_dir))
+        self.fs=[x for x in fs if os.path.splitext(x)[1]=='.pcd']
         self.stop_flag=False
         self.round_read_ptr=None
-
     def start(self):
         self.stop_flag=False
         if self.round_read_ptr is None:
             self.round_read_ptr = threading.Thread(target=self.auto_pub)
             self.round_read_ptr.start()
-    
     def command_loop(self):
         while True:
             print('0:auto pub, 2:pause, .:manually pub, 3:exit')
@@ -122,7 +110,6 @@ class PC_Offline_Publisher:
                 break
             else:
                 print('continue')
-
     def auto_pub(self):
         print(f'{time.asctime()} start auto publish.')
         while not self.stop_flag:
@@ -131,19 +118,19 @@ class PC_Offline_Publisher:
         print(f'{time.asctime()} stop auto publish.')
         self.round_read_ptr=None
         self.stop_flag=False
-
-
     def read_and_publish(self):
-        data = self.dataset[self.counter]
-        x_np=data[0].numpy()
-        if keepChannel>3:
-            x_pc = np_xyzi2pc(x_np)
+        pc = o3d.t.io.read_point_cloud(pj(self.source_dir,self.fs[self.counter]))
+        data=dict(pc.point.items())
+        if 'intensity' in data:
+            x=np.concatenate([data['positions'].numpy(),data['intensity'].numpy()],axis=1)
+            x=np_xyzi2pc(x)
         else:
-            x_pc = np_xyz2pc(x_np)
+            x=data['positions'].numpy()
+            x=np_xyz2pc(x)
         t = RosTime.from_sec(time.time())
-        pc = rosnp.point_cloud2.array_to_pointcloud2(x_pc, stamp=t,frame_id=CONF.FRAME_LIDAR)
+        pc = rosnp.point_cloud2.array_to_pointcloud2(x, stamp=t,frame_id=CONF.FRAME_LIDAR)
         self.pc_pub.publish(pc)
-        self.counter = (self.counter+1)%len(self.dataset)
+        self.counter = (self.counter+1)%len(self.fs)
 
 
 
