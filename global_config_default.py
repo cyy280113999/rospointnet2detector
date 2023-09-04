@@ -4,7 +4,7 @@ import os
 pj=lambda *args:os.path.join(*args)
 # ============= customized params
 DEBUG=True  # debug print some messages
-AtRemote=False # is server at remote ?
+AtRemote=True # is server at remote ?
 # usr_name = 'cyy'
 usr_name = 'cyy' if not AtRemote else 'lhk'
 # ==main
