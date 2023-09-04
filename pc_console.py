@@ -21,10 +21,10 @@ pj=lambda *args:os.path.join(*args)
 
 # -- where is the pc?
 if CONF.ON_LINE:
-    TOPIC_FROM='/rslidar_points' # from online lidar
+    TOPIC_FROM=CONF.TOPIC_RAW # from online lidar
     PRE_CALIB=True # calib ensure standard rotation at height of 2m, easy to train network
 else:
-    TOPIC_FROM='/off_line' # from off line files. off line pc saved after calibration, used for debug
+    TOPIC_FROM=CONF.TOPIC_OFFLINE # from off line files. off line pc saved after calibration, used for debug
     PRE_CALIB=False # off line donot calib
 BOUNDING=True # bounding limit calibrated dataset in proper boundary 
 

@@ -3,19 +3,19 @@ import torch
 import torch.nn.functional as nf
 import torch.optim as optim
 import torch.utils.data
+import open3d as o3d
 from utilities import *
 from transfer_pn2 import TransferPn2
 
 def main():
-    dataset_path='/home/cyy/datasets/pc0718m'
     transfer=False
+    dataset_path='/home/cyy/datasets/pc0718m_pcd'
+    model_path='./model/final2.pth'
+    # lr_rate=0.0001
     lr_rate=0.001
     if transfer:
         # pointnet2 checkpoint training with shapenet. class_num=50
         model_path='./model/pretrain_pn2_77.pth' 
-    else:
-        model_path='./model/final2.pth'
-        # lr_rate=0.0001
     label_filter=None
     label_map=[(6,3)] # target to material
     # label_map=None
@@ -48,7 +48,7 @@ def main():
         normalization=True,
         augmentation=True,
         rotation=True,
-        keepChannel=keepChannel,
+        keepIntensity=keepChannel,
         has_label=True,
         )
     dataset.get_normalization('ds_norm.npy')
@@ -117,8 +117,7 @@ class TransferDataset(torch.utils.data.Dataset):
                  normalization=False,
                  augmentation=False,
                  rotation=False,
-                 keepChannel=3,
-                 has_label=True,
+                 keepIntensity=False,
                  ):
         self.root = root
         self.label_filter=label_filter # label to remove
@@ -129,14 +128,13 @@ class TransferDataset(torch.utils.data.Dataset):
         self.std=None
         self.augmentation=augmentation
         self.rotation=rotation
-        assert keepChannel>=3
-        self.keepChannel=keepChannel # keep additional channel
-        self.has_label=has_label
+        self.keepIntensity=keepIntensity # keep additional channel
         self.datapath = [e.path for e in os.scandir(root)]
         self.datapath.sort(key=strSort)
     
     def get_normalization(self, fn='ds_norm.npy'):
         if not os.path.exists(fn):
+            raise NotImplementedError # wait for pcd version
             # all channel except label, float64 for acc
             datas=[np.load(self.datapath[i]).astype(np.float64)[:,:-1] for i in range(len(self.datapath))]
             x=np.concatenate(datas,axis=0)
@@ -150,25 +148,28 @@ class TransferDataset(torch.utils.data.Dataset):
             np.save(fn,(self.mean,self.std))
         else:
             self.mean,self.std=np.load(fn)
-            self.mean = self.mean[:self.keepChannel].astype(np.float32)
-            self.std = self.std[:self.keepChannel].astype(np.float32)
+            if not self.keepIntensity:
+                self.mean = self.mean[:3].astype(np.float32)
+                self.std = self.std[:3].astype(np.float32)
 
     def __getitem__(self, index):
-        x = np.load(self.datapath[index]).astype(np.float32) # load from file
-        if self.has_label and self.label_filter is not None: # in default, label is in last dim
+        pcd = o3d.t.io.read_point_cloud(self.datapath[index]) # load from file
+        x = pcd.point.positions.numpy()
+        if self.keepIntensity:
+            x = np.concatenate([x,pcd.point.intensity.numpy()],axis=1)
+        x = np.concatenate([x,pcd.point.label.numpy().astype(np.float32)],axis=1)
+        if self.label_filter is not None: # in default, label is in last dim
             for i in self.label_filter:
                 x=x[x[:,-1]!=i]
         if self.npoints is not None:
             x = pc_downsample(x, self.npoints)
-        seg=None
-        if self.has_label:
-            seg=x[:,-1].astype(np.int64)
-            if self.label_map is not None:
-                seg=label_remap(seg,self.label_map)
-            seg = torch.from_numpy(seg)
-            x = x[:,:-1] # remove label
-        if self.keepChannel<x.shape[1]:
-            x=x[:,:self.keepChannel]
+        seg=x[:,-1].astype(np.int64)
+        if self.label_map is not None:
+            seg=label_remap(seg,self.label_map)
+        seg = torch.from_numpy(seg)
+        x = x[:,:-1] # remove label
+        if not self.keepIntensity:
+            x=x[:,:3]
         if self.normalization:
             x = normalize(x, self.mean, self.std)
         pc = x[:,:3]  # pc is in the first three dims

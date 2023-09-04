@@ -14,32 +14,21 @@ pj=lambda *args:os.path.join(*args)
 pcd dataset's ros topic publisher
 
 """
-OFFLINE_RATE=3
-DSChooseFirst=True
-if DSChooseFirst:
-    # pointcloud_dir=f'/home/{usr_name}/datasets/saved_npys' # 4000
-    # pointcloud_dir=f'/home/{usr_name}/datasets/pc0602' # 1100
-    # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0602f' # 500
-    # pointcloud_dir=f'/home/{usr_name}/datasets/pc063003' # 382  
-    # pointcloud_dir=f'/home/{usr_name}/datasets/pc_filtered' # 1100
-    # pointcloud_dir=f'/home/{usr_name}/datasets/pc0701static' # 382
-    # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc071803'
-    # pointcloud_dir=f'/mnt/d/wsl_tools/pc082303'
-    # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc082601'
-    pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc071803_pcd/' # 500
-    has_label=False # raw pc has no label
-else:
-    # -- here are labeled pointclouds
-    # pointcloud_dir=f'/home/{usr_name}/datasets/pc_labeled' # 382  
-    pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc071803mix'
-    # pointcloud_dir='./test'
-    has_label=True # labeled pc [x,y,z,intensity,label]
+OFFLINE_RATE=5
+# pointcloud_dir=f'/home/{usr_name}/datasets/saved_npys' # 4000
+# pointcloud_dir=f'/home/{usr_name}/datasets/pc0602' # 1100
+# pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0602f' # 500
+# pointcloud_dir=f'/home/{usr_name}/datasets/pc063003' # 382  
+# pointcloud_dir=f'/home/{usr_name}/datasets/pc_filtered' # 1100
+# pointcloud_dir=f'/home/{usr_name}/datasets/pc0701static' # 382
+# pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc071803'
+# pointcloud_dir=f'/mnt/d/wsl_tools/pc082303'
+# pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc082601'
+pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0718m_pcd/' # 500
+pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc063003_pcd/' # 500
+
 
 npoints=7000
-normalization=False
-augmentation=False
-rotation=False
-keepChannel=4
 
 # where to
 CONF.TOPIC_OFFLINE
@@ -84,7 +73,8 @@ class PC_Offline_Publisher:
         self.counter=0
         self.source_dir=source_dir
         fs=list(os.listdir(source_dir))
-        self.fs=[x for x in fs if os.path.splitext(x)[1]=='.pcd']
+        fs=[x for x in fs if os.path.splitext(x)[1]=='.pcd']
+        self.fs=sorted(fs,key=strSort)
         self.stop_flag=False
         self.round_read_ptr=None
     def start(self):

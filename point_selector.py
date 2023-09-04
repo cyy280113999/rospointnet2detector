@@ -86,13 +86,13 @@ class PointSelector:
                         if len(col)>0:
                             col[:,3]=class_num+i*zsteps+j # over write intensity
                             patches.append(col)
-                if CONF.DEBUG:
-                    pc_plot=np.vstack(patches)+np.array([[-0.4,0,0,0]])
-                    pc_log=np.vstack([pc_log,pc_plot])
-                    self.pub_patch.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.FRAME_LIDAR))
                 if len(patches)<n//2: # less than half
                     points=None
                 else:
+                    if CONF.DEBUG:
+                        pc_plot=np.vstack(patches)+np.array([[-0.4,0,0,0]])
+                        pc_log=np.vstack([pc_log,pc_plot])
+                        self.pub_patch.publish(rosnp.point_cloud2.array_to_pointcloud2(np_xyzi2pc(pc_plot),frame_id=CONF.FRAME_LIDAR))
                     # get max point of each patch
                     points=[]
                     for i in range(len(patches)):
@@ -110,6 +110,8 @@ class PointSelector:
                     points=points[np.argsort(points[:,1])[::-1]] # sort by y
                     if n==2:
                         points = points[[0,-1]]
+                    else:
+                        points = points[:13]
                     if CONF.DEBUG:
                         pc_plot=points+np.array([[-0.8,0,0,0]])
                         pc_log=np.vstack([pc_log,pc_plot])
