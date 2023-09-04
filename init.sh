@@ -1,0 +1,1 @@
+cp global_config_default.py global_config.py
