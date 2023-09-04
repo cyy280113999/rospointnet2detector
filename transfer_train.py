@@ -6,11 +6,13 @@ import torch.utils.data
 import open3d as o3d
 from utilities import *
 from transfer_pn2 import TransferPn2
+import global_config as CONF
+
 
 def main():
     transfer=False
     dataset_path='/home/cyy/datasets/pc0718m_pcd'
-    model_path='./model/final2.pth'
+    model_path='./model/final.pth'
     # lr_rate=0.0001
     lr_rate=0.001
     if transfer:
@@ -48,10 +50,9 @@ def main():
         normalization=True,
         augmentation=True,
         rotation=True,
-        keepIntensity=keepChannel,
-        has_label=True,
+        keepIntensity=False,
         )
-    dataset.get_normalization('ds_norm.npy')
+    dataset.get_normalization(CONF.FILE_NORM)
     dataloader = torch.utils.data.DataLoader(
         dataset,
         batch_size=batchSize,
