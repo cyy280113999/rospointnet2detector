@@ -168,6 +168,7 @@ class TransferDataset(torch.utils.data.Dataset):
         self.npoints = npoints
         self.normalization=normalization
         self.mean=None
+        self.std=None
         self.augmentation=augmentation
         self.rotation=rotation
         assert keepChannel>=3
@@ -175,8 +176,6 @@ class TransferDataset(torch.utils.data.Dataset):
         self.has_label=has_label
         self.datapath = [e.path for e in os.scandir(root)]
         self.datapath.sort(key=strSort)
-        self.cache = {}
-        self.cache_size = 20000
     
     def get_normalization(self, fn='ds_norm.npy'):
         if not os.path.exists(fn):
@@ -197,8 +196,6 @@ class TransferDataset(torch.utils.data.Dataset):
             self.std = self.std[:self.keepChannel].astype(np.float32)
 
     def __getitem__(self, index):
-        if index in self.cache: # load from cache
-            return self.cache[index]
         x = np.load(self.datapath[index]).astype(np.float32) # load from file
         if self.has_label and self.label_filter is not None: # in default, label is in last dim
             for i in self.label_filter:
@@ -229,8 +226,6 @@ class TransferDataset(torch.utils.data.Dataset):
         x[:,:3]=pc
         # remove extra feature in addtional channel
         x = torch.from_numpy(x)
-        if len(self.cache) < self.cache_size: # save into cache
-            self.cache[index] = (x,  seg)
         return x, seg
 
     def __len__(self):
