@@ -6,11 +6,14 @@ import torch.utils.data
 import tqdm
 import open3d as o3d
 import numpy as np
-from transfer_dataset import *
+from utilities import *
 from transfer_pn2 import TransferPn2
 import global_config as CONF
 pj=lambda *args:os.path.join(*args)
+"""
+save label for each point cloud
 
+"""
 source_dir='/home/cyy/datasets/pcEnhance'
 dest_dir='/home/cyy/datasets/pcEnhancePreLabel'
 if not os.path.exists(dest_dir):

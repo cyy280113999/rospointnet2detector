@@ -4,7 +4,14 @@ import torch.nn.parallel
 import torch.nn.functional as F
 import torch.utils.data
 from pointnet2_utils import PointNetSetAbstractionMsg, PointNetSetAbstraction, PointNetFeaturePropagation
-# copy, modified from pointnet2
+"""
+copy, modified from pointnet2
+
+transfer pointnet2
+easy to change input & output channels
+
+
+"""
 class TransferPn2(nn.Module):
     def __init__(self,inc=3,outc=50, pretrained_state_dict=None):
         super(TransferPn2, self).__init__()

@@ -4,9 +4,12 @@ import ros_numpy as rosnp
 import torch
 from sensor_msgs.msg import PointCloud2
 from transfer_pn2 import TransferPn2
-from transfer_dataset import *
+from utilities import *
 import global_config as CONF
+"""
+ros pointnet2
 
+"""
 # module debug: where is the point cloud?
 # topic_pc_from='/rslidar_points'
 TOPIC_TEST_FROM=CONF.TOPIC_OFFLINE

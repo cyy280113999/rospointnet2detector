@@ -7,7 +7,7 @@ os.chdir(BASE_DIR)
 sys.path.append(BASE_DIR)
 import numpy as np
 import tqdm
-from transfer_dataset import pc_calib
+from utilities import pc_calib
 
 # run calib on ds
 

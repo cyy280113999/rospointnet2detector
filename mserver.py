@@ -19,6 +19,15 @@ from pymodbus.server import (
 # )
 import global_config as CONF
 
+"""
+start modbus server as data storage at local machine.
+
+reading & writing implemented by client.
+
+config:
+ip,port
+
+"""
 
 class MServer:
     def __init__(self):

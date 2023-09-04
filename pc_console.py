@@ -9,7 +9,7 @@ import rospy
 import ros_numpy as rosnp
 from std_msgs.msg import String, Int32
 from sensor_msgs.msg import PointCloud2
-from transfer_dataset import *
+from utilities import *
 from pc_recorder import PC_Recorder
 from mserver import MServer
 from mclient import MClient
@@ -62,7 +62,7 @@ class PC_Console:
         # to arm 
         self.shift_puber = rospy.Publisher(CONF.TOPIC_ARM, PointCloud2, queue_size=1)
 
-        # tele
+        # net
         if CONF.Start_MServer:
             self.mserver = MServer()
             self.mserver.start()

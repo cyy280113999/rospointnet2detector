@@ -7,10 +7,14 @@ import ros_numpy as rosnp
 from sensor_msgs.msg import PointCloud2
 import open3d as o3d
 import global_config as CONF
-from transfer_dataset import time_str
+from utilities import time_str
 pj=lambda *args:os.path.join(*args)
+"""
+pcd recorder
 
-# record pc from topic after calibration
+record pc from topic after calibration
+
+"""
 
 def main():
     rospy.init_node('ros_pc_recorder', anonymous=False)

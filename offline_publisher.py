@@ -5,12 +5,15 @@ import ros_numpy as rosnp
 import threading
 from sensor_msgs.msg import PointCloud2
 import time
-from transfer_dataset import *
+from utilities import *
 from genpy.rostime import Time as RosTime
 import open3d as o3d
 import global_config as CONF
 pj=lambda *args:os.path.join(*args)
+"""
+pcd dataset's ros topic publisher
 
+"""
 OFFLINE_RATE=3
 DSChooseFirst=True
 if DSChooseFirst:

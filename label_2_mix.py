@@ -8,7 +8,7 @@ sys.path.append(BASE_DIR)
 import numpy as np
 import tqdm
 import open3d as o3d
-from transfer_dataset import strSort
+from utilities import strSort
 # 首先使用工具对pcd文件添加标签!
 # cd ~/temp/semantic-segmentation-editor-x.x.x
 # meteor npm install

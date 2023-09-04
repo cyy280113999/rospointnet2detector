@@ -3,10 +3,29 @@
 from pymodbus.client import AsyncModbusTcpClient,ModbusTcpClient
 from pymodbus.client import ModbusTcpClient
 import numpy as np
+from functools import reduce
 import global_config as CONF
 
+"""
+modbus client
 
-def encode_value(value):# int32 to DWord * 2
+use read & write method to access continuous memory in server.
+
+server register buffer: [uint16,]
+
+write:
+write_registers(start,data:list)
+
+read:
+read_holding_registers(start,len)
+
+start:0
+end:9999
+data:[uint16,]
+
+"""
+
+def encode_value(value):# int32 to Word * 2
     high_word = (value >> 16) & 0xFFFF  # 取高16位
     low_word = value & 0xFFFF  # 取低16位
     return high_word, low_word
@@ -60,7 +79,7 @@ class MClient:
     def setpoint(self,n=0,p=[0,0,0]): # n < 13
         if isinstance(p, np.ndarray):
             p = p.tolist()
-        data=list(map(encode_value,p))
+        data=reduce(lambda x,y:x+y,list(map(encode_value,p)))
         result = self.client.write_registers(CONF.MODBUS_WORD_POINTS+n*6,data) # write at 10
         if result.isError():
             print("写入错误：", result)

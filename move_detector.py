@@ -4,23 +4,25 @@ import numpy as np
 import ros_numpy as rosnp
 from sensor_msgs.msg import PointCloud2
 from std_msgs.msg import Float32MultiArray,Float32, Int32
-from transfer_dataset import *
+from utilities import *
 from collections import deque
 from threading import Timer
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 import global_config as CONF
 
-# ===== note
-# 0 no object
-# 1 unrecogized object
-# 2 at one side
-# 3 mass center at given height
-# 4 mass center stop move
-# 5 truck velocity stop
-# 6 truck position stop # wait
+"""
+move detect state:
+0 no object
+1 unrecogized object
+2 at one side
+3 mass center at given height
+4 mass center stop move
+5 truck velocity stop
+6 truck position stop # wait
 
-# ====== c params
+
+"""
 
 
 PLOT_MAX=3
@@ -71,25 +73,24 @@ class MoveDetector:
     def process(self, x:np.ndarray,t):
         state=0 # initial state
         x=x.copy()
-        # x = x[x[:,0]<=2-0.1] # remove the road
-        x = x[x[:,2]>=-0.25] # keep z in -0.25 ~ 0.25
-        x = x[x[:,2]<=0.25]
-        x = x[:,:2] # remove z axis
-        x = x[:,::-1] # swap xy axis, new x is old y
-        x[:,1] = -x[:,1] # flip new y(old x, depth)
+        # x = x[x[:,0]<=2-0.1] # remove the road at bottom. this is unused
+        x = pc_bound(x,zb=[-0.25,0.25]) # remove the edge from both side. keep z in -0.25 ~ 0.25
+        x = x[:,:2] # to 2d points. remove z axis 
+        x = x[:,::-1] # to standard viewpoint, come from -x to +x. 1. swap xy axis, new x is old y
+        x[:,1] = -x[:,1] # 2. flip new y(old x, depth)
         if len(x)<=0: # no points
             print(f'move-detect: frame {t} has no enough points')
             return state
-        self.time_list=insert_with_limit(self.time_list,t,100)
+        self.time_list=insert_with_limit(self.time_list,t, 100)
         self.pc2d_list=insert_with_limit(self.pc2d_list, x, 100) # notice pc2d is at new coordinate.
-        if len(self.time_list)<=1: # first estimation no enough frames
+        if len(self.time_list)<=1: # first estimation has no enough frames, skip
             return state
         center_y=np.mean(x,axis=0)[1].item() # height of mass center
         if CONF.DEBUG:
             self.pub_center.publish(Float32(center_y))
         if -2.3<=center_y<-1.7: # origin is 2m above road. so -2 is the road
             state=0
-        elif -1.7<=center_y<-1.0: # sth. occur
+        elif -1.7<=center_y<-1.0: # small object occur
             state=1
         elif -1.0<=center_y<0: # possibly truck at one side
             state=2
@@ -100,7 +101,7 @@ class MoveDetector:
         else:
             ind_c = find_nearst(self.time_list,t-CONF.MOVE_FRAME_CURRENT).item()
             ind_l = find_nearst(self.time_list,t-CONF.MOVE_FRAME_BEFORE).item()
-            if ind_c==ind_l:
+            if ind_c==ind_l: # if no point comes in 1s
                 print('move-detect: time interval is too long')
                 return state
             # if ind_c==ind_l: # can not find two different frames
@@ -117,7 +118,7 @@ class MoveDetector:
             if move_dist <= CONF.MOVE_TOLERANCE_CENTER:
                 state = 4
         # must notice not all truck body can observed by lidar,
-        # when filled view point, mass center not move clearly, use icp to enhance judgement
+        # when viewpoint filled, mass center moves not obviously. icp is taken to enhance judgement
         if state!=4: # center detection is not concise, continue estimate
             self.v_list.clear()
         else:
@@ -128,10 +129,10 @@ class MoveDetector:
             if abs(dist)>0.5:
                 print(f'move-detect: dist overflow: {dist}')
                 dist=max(0.5,min(-0.5,dist))
-            v=dist/(self.time_list[ind_c]-self.time_list[ind_l])
-            self.v_list=insert_with_limit(self.v_list,v,3)
+            v=dist/(self.time_list[ind_c]-self.time_list[ind_l]) # take velocity
+            self.v_list=insert_with_limit(self.v_list,v,3) # aveage v by time
             v=np.mean(self.v_list)
-            if abs(v)<=CONF.MOVE_TOLERANCE_VELOCITY:
+            if abs(v)<=CONF.MOVE_TOLERANCE_VELOCITY: # over threshold
                 state=5
                 if CONF.MOVE_POSITION and self.stop_position is None:
                     self.stop_position = self.pc2d_list[ind_c] # record stop position
@@ -153,7 +154,7 @@ class MoveDetector:
 def clipMM(x):
     return min(2*PLOT_MAX,max(-2*PLOT_MAX,x))
 
-def icp_simplified(source:np.ndarray, target, max_iterations=50, tolerance=1e-3): 
+def icp_simplified(source:np.ndarray, target, max_iterations=50, tolerance=1e-3): # detect x-shift from two curve
     # what dist if source + dist == target?
     x_shift = 0.05
     iterations = 0
