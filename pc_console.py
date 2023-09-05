@@ -261,7 +261,7 @@ class PC_Console:
         if self.record_flag: # record after calibration
             self.recorder.save_once(x)
             self.record_flag=False
-        self.pc_history=insert_with_limit(self.pc_history,x,10)
+        # self.pc_history=insert_with_limit(self.pc_history,x,10)
         # net
         t = stamp.to_time()
         is_detect=True
@@ -288,10 +288,10 @@ class PC_Console:
                     print(f'require: {s1}_{s2}')
                     if not os.path.exists(pj(CONF.DIR_PC_LOG10,s1)):
                         os.makedirs(pj(CONF.DIR_PC_LOG10,s1))
-                    for i,xi in enumerate(self.pc_history):
-                        pcd = o3d.t.geometry.PointCloud(o3d.core.Tensor(xi[:,:3])) # set position
-                        pcd.point.intensity=o3d.core.Tensor(xi[:,3:4]) # set intensity 
-                        o3d.t.io.write_point_cloud(pj(CONF.DIR_PC_LOG10,s1,f'{s2}_{i}.pcd'),pcd,write_ascii=False)
+                    # for i,xi in enumerate(self.pc_history):
+                    #     pcd = o3d.t.geometry.PointCloud(o3d.core.Tensor(xi[:,:3])) # set position
+                    #     pcd.point.intensity=o3d.core.Tensor(xi[:,3:4]) # set intensity 
+                    #     o3d.t.io.write_point_cloud(pj(CONF.DIR_PC_LOG10,s1,f'{s2}_{i}.pcd'),pcd,write_ascii=False)
         if is_detect and self.detect:
             # if Start_MClient:
             #     self.mclient.set_require(2) # busy
