@@ -14,7 +14,7 @@ pj=lambda *args:os.path.join(*args)
 pcd dataset's ros topic publisher
 
 """
-OFFLINE_RATE=5
+OFFLINE_RATE=10
 # pointcloud_dir=f'/home/{usr_name}/datasets/saved_npys' # 4000
 # pointcloud_dir=f'/home/{usr_name}/datasets/pc0602' # 1100
 # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0602f' # 500
@@ -26,6 +26,7 @@ OFFLINE_RATE=5
 # pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc082601'
 pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0718m_pcd/' # 500
 pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc063003_pcd/' # 500
+pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0720/' # 500
 
 
 npoints=7000

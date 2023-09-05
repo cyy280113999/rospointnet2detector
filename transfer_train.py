@@ -11,7 +11,7 @@ import global_config as CONF
 
 def main():
     transfer=False
-    dataset_path='/home/cyy/datasets/pc0718m_pcd'
+    dataset_path='/home/cyy/datasets/pc0718m'
     model_path='./model/final.pth'
     # lr_rate=0.0001
     lr_rate=0.001

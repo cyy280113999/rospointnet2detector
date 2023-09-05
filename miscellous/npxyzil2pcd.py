@@ -6,8 +6,8 @@ import tqdm
 pj=lambda *args:os.path.join(*args)
 
 # x y z [intensity, label] (if exist)
-source_dir='/home/cyy/datasets/pc071803l/'
-dest_dir='/home/cyy/datasets/pc071803l_pcd/'
+source_dir='/home/cyy/datasets/pc0720/'
+dest_dir='/home/cyy/datasets/pc0720_pcd/'
 if not os.path.exists(dest_dir):
     os.makedirs(dest_dir)
 fs=list(os.listdir(source_dir))
