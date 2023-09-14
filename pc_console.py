@@ -286,8 +286,8 @@ class PC_Console:
                     self.pub_require.publish(Int32(1))
                     s1,s2=day_second()
                     print(f'require: {s1}_{s2}')
-                    if not os.path.exists(pj(CONF.DIR_PC_LOG10,s1)):
-                        os.makedirs(pj(CONF.DIR_PC_LOG10,s1))
+                    # if not os.path.exists(pj(CONF.DIR_PC_LOG10,s1)):
+                    #     os.makedirs(pj(CONF.DIR_PC_LOG10,s1))
                     # for i,xi in enumerate(self.pc_history):
                     #     pcd = o3d.t.geometry.PointCloud(o3d.core.Tensor(xi[:,:3])) # set position
                     #     pcd.point.intensity=o3d.core.Tensor(xi[:,3:4]) # set intensity 
@@ -308,7 +308,7 @@ class PC_Console:
                     for i,p in enumerate(ps):
                         self.mclient.setpoint(i,p)
                     self.mclient.set_require(CONF.REQUIRE_SUCCESS) # over
-                    print(f'task success')
+                    # print(f'task success')
                 else:
                     self.mclient.set_require(CONF.REQUIRE_FAIL) # error
                     print(f'task fail')

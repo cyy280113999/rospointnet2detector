@@ -27,6 +27,7 @@ OFFLINE_RATE=10
 pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0718m_pcd/' # 500
 pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc063003_pcd/' # 500
 pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0720/' # 500
+pointcloud_dir=f'/home/{CONF.usr_name}/datasets/pc0906/'
 
 
 npoints=7000
